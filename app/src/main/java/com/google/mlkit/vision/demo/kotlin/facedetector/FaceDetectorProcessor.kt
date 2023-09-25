@@ -18,6 +18,7 @@ package com.google.mlkit.vision.demo.kotlin.facedetector
 
 import android.content.Context
 import android.util.Log
+import android.widget.TextView
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.demo.GraphicOverlay
@@ -30,11 +31,13 @@ import com.google.mlkit.vision.face.FaceLandmark
 import java.util.Locale
 
 /** Face Detector Demo.  */
-class FaceDetectorProcessor(context: Context, detectorOptions: FaceDetectorOptions?) :
+class FaceDetectorProcessor(context: Context, detectorOptions: FaceDetectorOptions?, textView : TextView) :
   VisionProcessorBase<List<Face>>(context) {
 
+  private val textView: TextView
   private val detector: FaceDetector
   init {
+    this.textView = textView
     val options = detectorOptions
       ?: FaceDetectorOptions.Builder()
         .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
@@ -56,6 +59,9 @@ class FaceDetectorProcessor(context: Context, detectorOptions: FaceDetectorOptio
   }
 
   override fun onSuccess(faces: List<Face>, graphicOverlay: GraphicOverlay) {
+    if (textView != null)
+      textView.text = faces.size.toString() + " faces detected"
+
     for (face in faces) {
       graphicOverlay.add(FaceGraphic(graphicOverlay, face))
       logExtrasForTesting(face)

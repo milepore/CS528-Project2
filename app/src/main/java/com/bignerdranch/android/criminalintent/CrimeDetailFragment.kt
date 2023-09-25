@@ -161,7 +161,7 @@ class CrimeDetailFragment : Fragment() {
                 setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE).
                 setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE).
                 setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST).build();
-            imageProcessor = FaceDetectorProcessor(requireContext(), options)
+            imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
         }
     }
 
