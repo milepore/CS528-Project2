@@ -4,7 +4,7 @@ Yang, Zhiwei; Lepore, Michael; Liu, Yuyuan; Wu, Kangjian
 
 Things to do:
 
-[] Handle Rotation Properly
+[x] Handle Rotation Properly
 * Update CrimeDetailFragment::processImage to create the bitmap already rotated - see BitmapUtils for info
 [] Pick different kinds of mlkit processing
 * Add check boxes for each kind of ML processing
