@@ -19,20 +19,16 @@ package com.google.mlkit.vision.demo.kotlin
 import android.app.ActivityManager
 import android.content.Context
 import android.graphics.Bitmap
-import android.os.Build.VERSION_CODES
+import android.media.ExifInterface
 import android.os.SystemClock
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.GuardedBy
-import androidx.annotation.RequiresApi
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskExecutors
 import com.google.android.gms.tasks.Tasks
-import com.google.android.odml.image.BitmapMlImageBuilder
-import com.google.android.odml.image.ByteBufferMlImageBuilder
-import com.google.android.odml.image.MediaMlImageBuilder
 import com.google.android.odml.image.MlImage
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.common.InputImage
@@ -104,26 +100,24 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
   }
 
   // -----------------Code for processing single still image----------------------------------------
+  private fun exifToDegrees(exifOrientation: Int): Int {
+    if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+      return 90
+    } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+      return 180
+    } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+      return 270
+    }
+    return 0
+  }
+
   override fun processBitmap(bitmap: Bitmap?, graphicOverlay: GraphicOverlay) {
     val frameStartMs = SystemClock.elapsedRealtime()
-
-    if (isMlImageEnabled(graphicOverlay.context)) {
-      val mlImage = BitmapMlImageBuilder(bitmap!!).build()
-      requestDetectInImage(
-        mlImage,
-        graphicOverlay,
-        /* originalCameraImage= */ null,
-        /* shouldShowFps= */ false,
-        frameStartMs
-      )
-      mlImage.close()
-      return
-    }
 
     requestDetectInImage(
       InputImage.fromBitmap(bitmap!!, 0),
       graphicOverlay,
-      /* originalCameraImage= */ null,
+      bitmap,
       /* shouldShowFps= */ false,
       frameStartMs
     )
@@ -164,24 +158,6 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
     // drawing), skip the unnecessary bitmap creation that used for the manual preview drawing.
     val bitmap = BitmapUtils.getBitmap(data, frameMetadata)
 
-    if (isMlImageEnabled(graphicOverlay.context)) {
-      val mlImage =
-        ByteBufferMlImageBuilder(
-            data,
-            frameMetadata.width,
-            frameMetadata.height,
-            MlImage.IMAGE_FORMAT_NV21
-          )
-          .setRotation(frameMetadata.rotation)
-          .build()
-      requestDetectInImage(mlImage, graphicOverlay, bitmap, /* shouldShowFps= */ true, frameStartMs)
-        .addOnSuccessListener(executor) { processLatestImage(graphicOverlay) }
-
-      // This is optional. Java Garbage collection can also close it eventually.
-      mlImage.close()
-      return
-    }
-
     requestDetectInImage(
       InputImage.fromByteBuffer(
         data,
@@ -192,7 +168,7 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
       ),
       graphicOverlay,
       bitmap,
-      /* shouldShowFps= */ true,
+      false,
       frameStartMs
     )
       .addOnSuccessListener(executor) { processLatestImage(graphicOverlay) }
@@ -201,22 +177,6 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
   // -----------------Common processing logic-------------------------------------------------------
   private fun requestDetectInImage(
     image: InputImage,
-    graphicOverlay: GraphicOverlay,
-    originalCameraImage: Bitmap?,
-    shouldShowFps: Boolean,
-    frameStartMs: Long
-  ): Task<T> {
-    return setUpListener(
-      detectInImage(image),
-      graphicOverlay,
-      originalCameraImage,
-      shouldShowFps,
-      frameStartMs
-    )
-  }
-
-  private fun requestDetectInImage(
-    image: MlImage,
     graphicOverlay: GraphicOverlay,
     originalCameraImage: Bitmap?,
     shouldShowFps: Boolean,
@@ -346,8 +306,4 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
   protected abstract fun onSuccess(results: T, graphicOverlay: GraphicOverlay)
 
   protected abstract fun onFailure(e: Exception)
-
-  protected open fun isMlImageEnabled(context: Context?): Boolean {
-    return false
-  }
 }

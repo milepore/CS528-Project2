@@ -169,6 +169,8 @@ class CrimeDetailFragment : Fragment() {
         val graphicOverlay = _binding!!.graphicOverlay
         graphicOverlay!!.clear()
 
+        setBaseImage(path, _binding!!.graphicOverlay)
+
         setupProcessor()
         if (imageProcessor != null) {
             val bitmap = BitmapFactory.decodeFile(path.path)
@@ -261,27 +263,24 @@ class CrimeDetailFragment : Fragment() {
     }
 
     private fun updatePhoto(photoFileName: String?) {
-        if (binding.crimePhoto.tag != photoFileName) {
+        if (binding.graphicOverlay.tag != photoFileName) {
             val photoFile = photoFileName?.let {
                 File(requireContext().applicationContext.filesDir, it)
             }
 
             if (photoFile?.exists() == true) {
-                binding.crimePhoto.doOnLayout { measuredView ->
-                    val sampleSize = getSampleSize(photoFile.path, measuredView.width, measuredView.height)
-                    val scaledBitmap = getScaledBitmap(photoFile.path, sampleSize)
-                    _binding!!.graphicOverlay.setScaleFactor(1.0f / sampleSize.toFloat())
+                binding.graphicOverlay.doOnLayout { measuredView ->
+                    processImage(photoFile, 0)
 
-                    binding.crimePhoto.setImageBitmap(scaledBitmap)
-                    binding.crimePhoto.tag = photoFileName
-                    binding.crimePhoto.contentDescription =
+                    binding.graphicOverlay.tag = photoFileName
+                    binding.graphicOverlay.contentDescription =
                         getString(R.string.crime_photo_image_description)
                     processImage(photoFile, 0)
                 }
             } else {
-                binding.crimePhoto.setImageBitmap(null)
-                binding.crimePhoto.tag = null
-                binding.crimePhoto.contentDescription =
+                binding.graphicOverlay.clear()
+                binding.graphicOverlay.tag = null
+                binding.graphicOverlay.contentDescription =
                     getString(R.string.crime_photo_no_image_description)
             }
         }
