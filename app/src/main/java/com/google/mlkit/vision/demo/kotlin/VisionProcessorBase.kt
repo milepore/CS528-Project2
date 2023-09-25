@@ -32,7 +32,6 @@ import com.google.android.gms.tasks.Tasks
 import com.google.android.odml.image.MlImage
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.demo.BitmapUtils
 import com.google.mlkit.vision.demo.CameraImageGraphic
 import com.google.mlkit.vision.demo.FrameMetadata
 import com.google.mlkit.vision.demo.GraphicOverlay
@@ -122,7 +121,7 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
       frameStartMs
     )
   }
-
+/*
   // -----------------Code for processing live preview frame from Camera1 API-----------------------
   @Synchronized
   override fun processByteBuffer(
@@ -136,7 +135,6 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
       processLatestImage(graphicOverlay)
     }
   }
-
   @Synchronized
   private fun processLatestImage(graphicOverlay: GraphicOverlay) {
     processingImage = latestImage
@@ -156,7 +154,7 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
     val frameStartMs = SystemClock.elapsedRealtime()
     // If live viewport is on (that is the underneath surface view takes care of the camera preview
     // drawing), skip the unnecessary bitmap creation that used for the manual preview drawing.
-    val bitmap = BitmapUtils.getBitmap(data, frameMetadata)
+    val bitmap = getBitmap(data, frameMetadata)
 
     requestDetectInImage(
       InputImage.fromByteBuffer(
@@ -173,7 +171,7 @@ abstract class VisionProcessorBase<T>(context: Context) : VisionImageProcessor {
     )
       .addOnSuccessListener(executor) { processLatestImage(graphicOverlay) }
   }
-
+*/
   // -----------------Common processing logic-------------------------------------------------------
   private fun requestDetectInImage(
     image: InputImage,

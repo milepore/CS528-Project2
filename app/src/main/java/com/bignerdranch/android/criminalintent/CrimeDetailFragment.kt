@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Date
 import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
+import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
 
 private const val DATE_FORMAT = "EEE, MMM, dd"
@@ -155,10 +156,13 @@ class CrimeDetailFragment : Fragment() {
     // It should figure out which processor to use and then set it in imageProcessor
     // or if we don't want a processor, leave it as null
     fun setupProcessor() {
-        if (true) {
+        if (true) { // face detection or face contour detection
             val options = FaceDetectorOptions.Builder().
                 setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE).
-                setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE).
+                setContourMode( if(true) // TODO: update this to be if we have contour mode on
+                    FaceDetectorOptions.CONTOUR_MODE_ALL
+                else
+                    FaceDetectorOptions.CONTOUR_MODE_NONE).
                 setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE).
                 setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST).build();
             imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
@@ -173,7 +177,9 @@ class CrimeDetailFragment : Fragment() {
 
         setupProcessor()
         if (imageProcessor != null) {
-            val bitmap = BitmapFactory.decodeFile(path.path)
+            val bitmap = rotatedBitmap(path)
+            //val bitmap = BitmapFactory.decodeFile(path.path)
+
             imageProcessor!!.processBitmap(bitmap, graphicOverlay)
         }
     }

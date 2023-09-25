@@ -89,10 +89,10 @@ class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face) 
     }
 
     // Draw facial landmarks
-    //drawFaceLandmark(canvas, FaceLandmark.LEFT_EYE)
-//    drawFaceLandmark(canvas, FaceLandmark.RIGHT_EYE)
-//    drawFaceLandmark(canvas, FaceLandmark.LEFT_CHEEK)
-//    drawFaceLandmark(canvas, FaceLandmark.RIGHT_CHEEK)
+    drawFaceLandmark(canvas, FaceLandmark.LEFT_EYE)
+    drawFaceLandmark(canvas, FaceLandmark.RIGHT_EYE)
+    drawFaceLandmark(canvas, FaceLandmark.LEFT_CHEEK)
+    drawFaceLandmark(canvas, FaceLandmark.RIGHT_CHEEK)
   }
 
   private fun drawFaceLandmark(canvas: Canvas, @LandmarkType landmarkType: Int) {
