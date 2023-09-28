@@ -14,6 +14,7 @@ Things to do:
 
 [] Support more than a single image
 * Update the record to have 4 images and an image count
+* Probably need to update the version of the DB to v4 and add a migration going from v3->v4
 * Update CrimeDetailFragment to have an array of images and an array of GraphicOverlays
 * Update CrimeDetailFragment::processImage to use the right image and graphic overlay based on the index
 
