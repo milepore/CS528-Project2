@@ -91,7 +91,7 @@
         <com.google.mlkit.vision.demo.GraphicOverlay
             android:id="@+id/crime_photo_2"
             android:layout_width="0dp"
-            android:layout_height="80dp"
+            android:layout_height="120dp"
             android:layout_weight="1"
             android:scaleType="centerInside"
             android:cropToPadding="true"
@@ -101,7 +101,7 @@
         <com.google.mlkit.vision.demo.GraphicOverlay
             android:id="@+id/crime_photo_3"
             android:layout_width="0dp"
-            android:layout_height="80dp"
+            android:layout_height="120dp"
             android:layout_weight="1"
             android:scaleType="centerInside"
             android:cropToPadding="true"
@@ -111,7 +111,7 @@
         <com.google.mlkit.vision.demo.GraphicOverlay
             android:id="@+id/crime_photo_4"
             android:layout_width="0dp"
-            android:layout_height="80dp"
+            android:layout_height="120dp"
             android:layout_weight="1"
             android:scaleType="centerInside"
             android:cropToPadding="true"

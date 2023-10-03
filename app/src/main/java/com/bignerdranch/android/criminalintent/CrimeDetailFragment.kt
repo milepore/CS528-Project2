@@ -75,7 +75,6 @@ class CrimeDetailFragment : Fragment() {
                 while (filteredPhotoFileNames.size <= nextPhotoIndex) {
                     filteredPhotoFileNames.add("")
                 }
-
                 filteredPhotoFileNames[nextPhotoIndex] = photoName!!
 
                 println("Updated photo file names: $filteredPhotoFileNames")
@@ -190,20 +189,18 @@ class CrimeDetailFragment : Fragment() {
         }
     }
 
-    fun processImage(path : File, imageIndex : Int ) {
-        val graphicOverlay = _binding!!.graphicOverlay
-        graphicOverlay!!.clear()
-
-        setBaseImage(path, _binding!!.graphicOverlay)
+    fun processImage(path : File, imageIndex : Int , graphicOverlay: GraphicOverlay) {
+        graphicOverlay.clear()
+        setBaseImage(path, graphicOverlay)
 
         setupProcessor()
         if (imageProcessor != null) {
             val bitmap = rotatedBitmap(path)
-            //val bitmap = BitmapFactory.decodeFile(path.path)
-
             imageProcessor!!.processBitmap(bitmap, graphicOverlay)
         }
     }
+
+
 
     private fun updateUi(crime: Crime) {
         binding.apply {
@@ -314,6 +311,9 @@ class CrimeDetailFragment : Fragment() {
 
                             graphicOverlay.tag = photoFileName
                             graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
+
+                            // Call processImage here
+                            processImage(photoFile, 0, graphicOverlay)
                         } else {
                             Log.e("updatePhoto", "Scaled bitmap is null for file: ${photoFile.path}")
                             handleNoPhoto(graphicOverlay)
@@ -329,6 +329,7 @@ class CrimeDetailFragment : Fragment() {
             }
         }
     }
+
 
     private fun handleNoPhoto(graphicOverlay: GraphicOverlay) {
         graphicOverlay.clear()
