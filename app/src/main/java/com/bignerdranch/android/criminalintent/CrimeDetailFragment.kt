@@ -62,22 +62,31 @@ class CrimeDetailFragment : Fragment() {
     }
 
     private var photoName: String? = null
+    private var nextPhotoIndex = 0
+    private val maxPhotos = 4
 
     private val takePhoto = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { didTakePhoto: Boolean ->
         if (didTakePhoto && photoName != null) {
             crimeDetailViewModel.updateCrime { oldCrime ->
-                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { !it.isNullOrBlank() }
-                var updatedPhotoFileNames = listOfNotNull(photoName) + filteredPhotoFileNames // 将新照片插入到列表的开始位置
-                if (updatedPhotoFileNames.size > 4) {
-                    updatedPhotoFileNames = updatedPhotoFileNames.dropLast(1) // 移除最后一张照片
+                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { !it.isNullOrBlank() }.toMutableList()
+
+                while (filteredPhotoFileNames.size <= nextPhotoIndex) {
+                    filteredPhotoFileNames.add("")
                 }
-                println("Updated photo file names: $updatedPhotoFileNames")
-                oldCrime.copy(photoFileNames = updatedPhotoFileNames)
+
+                filteredPhotoFileNames[nextPhotoIndex] = photoName!!
+
+                println("Updated photo file names: $filteredPhotoFileNames")
+
+                nextPhotoIndex = (nextPhotoIndex + 1) % maxPhotos
+
+                oldCrime.copy(photoFileNames = filteredPhotoFileNames)
             }
         }
     }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
