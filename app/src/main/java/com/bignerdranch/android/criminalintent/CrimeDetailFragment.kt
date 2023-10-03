@@ -1,5 +1,6 @@
 package com.bignerdranch.android.criminalintent
 
+import com.google.mlkit.vision.demo.GraphicOverlay
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
@@ -11,6 +12,7 @@ import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.core.view.doOnLayout
@@ -32,6 +34,10 @@ import java.util.Date
 import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.util.Log
+
 
 private const val DATE_FORMAT = "EEE, MMM, dd"
 
@@ -62,7 +68,13 @@ class CrimeDetailFragment : Fragment() {
     ) { didTakePhoto: Boolean ->
         if (didTakePhoto && photoName != null) {
             crimeDetailViewModel.updateCrime { oldCrime ->
-                oldCrime.copy(photoFileName = photoName)
+                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { !it.isNullOrBlank() }
+                var updatedPhotoFileNames = listOfNotNull(photoName) + filteredPhotoFileNames // 将新照片插入到列表的开始位置
+                if (updatedPhotoFileNames.size > 4) {
+                    updatedPhotoFileNames = updatedPhotoFileNames.dropLast(1) // 移除最后一张照片
+                }
+                println("Updated photo file names: $updatedPhotoFileNames")
+                oldCrime.copy(photoFileNames = updatedPhotoFileNames)
             }
         }
     }
@@ -218,7 +230,7 @@ class CrimeDetailFragment : Fragment() {
                 getString(R.string.crime_suspect_text)
             }
 
-            updatePhoto(crime.photoFileName)
+            updatePhotos(crime)
         }
     }
 
@@ -267,28 +279,61 @@ class CrimeDetailFragment : Fragment() {
             )
         return resolvedActivity != null
     }
+    class BitmapGraphic(overlay: GraphicOverlay, private val bitmap: Bitmap) : GraphicOverlay.Graphic(overlay) {
+        override fun draw(canvas: Canvas) {
+            bitmap?.let {
+                canvas.drawBitmap(it, 0f, 0f, null)
+            }
+        }
+    }
 
-    private fun updatePhoto(photoFileName: String?) {
-        if (binding.graphicOverlay.tag != photoFileName) {
+    private fun updatePhoto(graphicOverlay: GraphicOverlay, photoFileName: String?) {
+        if (graphicOverlay.tag != photoFileName) {
             val photoFile = photoFileName?.let {
                 File(requireContext().applicationContext.filesDir, it)
             }
 
-            if (photoFile?.exists() == true) {
-                binding.graphicOverlay.doOnLayout { measuredView ->
-                    processImage(photoFile, 0)
+            if (photoFile?.exists() == true && photoFile.isFile) {
+                graphicOverlay.doOnLayout { measuredView ->
+                    try {
+                        val scaledBitmap = getScaledBitmap(photoFile.path, measuredView.width, measuredView.height)
+                        if (scaledBitmap != null) {
+                            val bitmapGraphic = BitmapGraphic(graphicOverlay, scaledBitmap)
+                            graphicOverlay.clear()
+                            graphicOverlay.add(bitmapGraphic)
+                            graphicOverlay.postInvalidate()
 
-                    binding.graphicOverlay.tag = photoFileName
-                    binding.graphicOverlay.contentDescription =
-                        getString(R.string.crime_photo_image_description)
-                    processImage(photoFile, 0)
+                            graphicOverlay.tag = photoFileName
+                            graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
+                        } else {
+                            Log.e("updatePhoto", "Scaled bitmap is null for file: ${photoFile.path}")
+                            handleNoPhoto(graphicOverlay)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("updatePhoto", "Error updating photo: ${e.localizedMessage}", e)
+                        handleNoPhoto(graphicOverlay)
+                    }
                 }
             } else {
-                binding.graphicOverlay.clear()
-                binding.graphicOverlay.tag = null
-                binding.graphicOverlay.contentDescription =
-                    getString(R.string.crime_photo_no_image_description)
+                Log.e("updatePhoto", "File does not exist or is not a file: ${photoFile?.path}")
+                handleNoPhoto(graphicOverlay)
             }
         }
     }
+
+    private fun handleNoPhoto(graphicOverlay: GraphicOverlay) {
+        graphicOverlay.clear()
+        graphicOverlay.tag = null
+        graphicOverlay.contentDescription = getString(R.string.crime_photo_no_image_description)
+    }
+
+
+
+    private fun updatePhotos(crime: Crime) {
+        updatePhoto(binding.graphicOverlay, crime.photoFileNames.getOrNull(0))
+        updatePhoto(binding.crimePhoto2, crime.photoFileNames.getOrNull(1))
+        updatePhoto(binding.crimePhoto3, crime.photoFileNames.getOrNull(2))
+        updatePhoto(binding.crimePhoto4, crime.photoFileNames.getOrNull(3))
+    }
+
 }
