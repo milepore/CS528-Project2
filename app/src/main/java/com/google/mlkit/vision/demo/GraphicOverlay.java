@@ -32,6 +32,7 @@ import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * A view which renders a series of custom graphics to be overlayed on top of an associated preview
  * (i.e., the camera preview). The creator can add graphics objects, update the objects, and remove
@@ -217,7 +218,6 @@ public class GraphicOverlay extends View {
         (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
             needUpdateTransformation = true);
   }
-
   /** Removes all graphics from the overlay. */
   public void clear() {
     synchronized (lock) {
