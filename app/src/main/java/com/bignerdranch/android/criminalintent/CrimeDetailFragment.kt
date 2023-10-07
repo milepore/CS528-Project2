@@ -114,7 +114,7 @@ class CrimeDetailFragment : Fragment() {
             // update faceMeshProcessor settings
             faceMeshProcessor.setMeshDetectionEnabled(isChecked)
 
-            setupProcessor(isChecked)
+            setupProcessor()
             crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
         }
 
@@ -191,20 +191,25 @@ class CrimeDetailFragment : Fragment() {
     //
     // It should figure out which processor to use and then set it in imageProcessor
     // or if we don't want a processor, leave it as null
-    fun setupProcessor(enableMesh: Boolean) {
-        val contourMode = if (enableMesh)
-            FaceDetectorOptions.CONTOUR_MODE_ALL
-        else
-            FaceDetectorOptions.CONTOUR_MODE_NONE
-        Log.d("MeshDebug", "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode")
-        val options = FaceDetectorOptions.Builder()
-            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
-//            .setContourMode(contourMode)
-            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-            .build()
+    fun setupProcessor() {
+        val enableMesh = binding.enableMeshDetection.isChecked
+        if (enableMesh) {
+            imageProcessor = FaceMeshDetectorProcessor(requireContext())
+        } else {
+            val contourMode = if (true) // change to if contour is on
+                FaceDetectorOptions.CONTOUR_MODE_ALL
+            else
+                FaceDetectorOptions.CONTOUR_MODE_NONE
+            Log.d("MeshDebug", "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode")
+            val options = FaceDetectorOptions.Builder()
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                .setContourMode(contourMode)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .build()
 
-        imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+            imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+        }
     }
 
     fun processImage(scaledBitmap: Bitmap, path : File, imageIndex : Int , graphicOverlay: GraphicOverlay) {
@@ -212,12 +217,10 @@ class CrimeDetailFragment : Fragment() {
         setBaseImage(path, graphicOverlay)
 
         // pass the status of checkbox of faceMeshDetection to setupProcessor
-        val enableMesh = binding.enableMeshDetection.isChecked
         val faceMeshDetector = FaceMeshDetectorProcessor(requireContext())
         val image = InputImage.fromBitmap(scaledBitmap, 0)
 
-        Log.d("MeshDebug", "Processing image with enableMesh: $enableMesh")
-        setupProcessor(enableMesh)
+        setupProcessor()
         if (imageProcessor != null) {
             val bitmap = rotatedBitmap(path)
             imageProcessor!!.processBitmap(bitmap, graphicOverlay)
