@@ -125,6 +125,15 @@ class CrimeDetailFragment : Fragment() {
                 null
             )
             crimeCamera.isEnabled = canResolveIntent(captureImageIntent)
+
+            ChooseCheckBox(arrayOf(
+                binding.enableFaceDetection,
+                binding.enableContourDetection,
+                binding.enableMeshDetection,
+                binding.enableSelfieSegmentation
+            )
+
+            )
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
