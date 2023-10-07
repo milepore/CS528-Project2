@@ -1,50 +1,41 @@
 package com.bignerdranch.android.criminalintent
 
 import android.os.Bundle
-import android.widget.CheckBox
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import android.view.View
+import com.bignerdranch.android.criminalintent.databinding.FragmentCrimeDetailBinding
 
-class ChooseCheckBox : AppCompatActivity() {
+class ChooseCheckBox : Fragment(R.layout.fragment_crime_detail) {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.fragment_crime_detail)
+    private var _binding: FragmentCrimeDetailBinding? = null
+    private val binding get() = _binding!!
 
-        val enableFaceDetection: CheckBox = findViewById(R.id.enableFaceDetection)
-        val enableContourDetection: CheckBox = findViewById(R.id.enableContourDetection)
-        val enableMeshDetection: CheckBox = findViewById(R.id.enableMeshDetection)
-        val enableSelfieSegmentation: CheckBox = findViewById(R.id.enableSelfieSegmentation)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentCrimeDetailBinding.bind(view)
 
-        enableFaceDetection.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableContourDetection.isChecked = false
-                enableMeshDetection.isChecked = false
-                enableSelfieSegmentation.isChecked = false
+        val allCheckBoxes = arrayOf(
+            binding.enableFaceDetection,
+            binding.enableContourDetection,
+            binding.enableMeshDetection,
+            binding.enableSelfieSegmentation
+        )
+
+        for (checkBox in allCheckBoxes) {
+            checkBox.setOnCheckedChangeListener { currentCheckBox, isChecked ->
+                if (isChecked) {
+                    for (otherCheckBox in allCheckBoxes) {
+                        if (otherCheckBox != currentCheckBox) {
+                            otherCheckBox.isChecked = false
+                        }
+                    }
+                }
             }
         }
+    }
 
-        enableContourDetection.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableFaceDetection.isChecked = false
-                enableMeshDetection.isChecked = false
-                enableSelfieSegmentation.isChecked = false
-            }
-        }
-
-        enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableFaceDetection.isChecked = false
-                enableContourDetection.isChecked = false
-                enableSelfieSegmentation.isChecked = false
-            }
-        }
-
-        enableSelfieSegmentation.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableFaceDetection.isChecked = false
-                enableContourDetection.isChecked = false
-                enableMeshDetection.isChecked = false
-            }
-        }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
