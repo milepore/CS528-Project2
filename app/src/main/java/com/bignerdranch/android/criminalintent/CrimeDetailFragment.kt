@@ -1,9 +1,9 @@
 package com.bignerdranch.android.criminalintent
 
+import com.google.mlkit.vision.demo.GraphicOverlay
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -24,7 +24,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bignerdranch.android.criminalintent.databinding.FragmentCrimeDetailBinding
-import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.demo.VisionImageProcessor
 import kotlinx.coroutines.launch
 import java.io.File
@@ -32,12 +31,17 @@ import java.util.Date
 import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import android.util.Log
+import com.google.mlkit.vision.demo.kotlin.facemeshdetector.FaceMeshDetectorProcessor
+
 
 private const val DATE_FORMAT = "EEE, MMM, dd"
+
 
 class CrimeDetailFragment : Fragment() {
 
     private var _binding: FragmentCrimeDetailBinding? = null
+    private lateinit var faceMeshProcessor: FaceMeshDetectorProcessor
     private val binding
         get() = checkNotNull(_binding) {
             "Cannot access binding because it is null. Is the view visible?"
@@ -54,18 +58,36 @@ class CrimeDetailFragment : Fragment() {
     ) { uri: Uri? ->
         uri?.let { parseContactSelection(it) }
     }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
+        faceMeshProcessor = FaceMeshDetectorProcessor(requireContext())
+    }
     private var photoName: String? = null
+    private var nextPhotoIndex = 0
+    private val maxPhotos = 4
 
     private val takePhoto = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { didTakePhoto: Boolean ->
         if (didTakePhoto && photoName != null) {
             crimeDetailViewModel.updateCrime { oldCrime ->
-                oldCrime.copy(photoFileName = photoName)
+                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { it.isNotBlank() }.toMutableList()
+
+                while (filteredPhotoFileNames.size <= nextPhotoIndex) {
+                    filteredPhotoFileNames.add("")
+                }
+                filteredPhotoFileNames[nextPhotoIndex] = photoName!!
+
+                println("Updated photo file names: $filteredPhotoFileNames")
+
+                nextPhotoIndex = (nextPhotoIndex + 1) % maxPhotos
+
+                oldCrime.copy(photoFileNames = filteredPhotoFileNames)
             }
         }
     }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -81,6 +103,17 @@ class CrimeDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
+        binding.enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
+            Log.d("CheckboxChanged", "Mesh detection is: $isChecked")
+
+            // update faceMeshProcessor settings
+            faceMeshProcessor.setMeshDetectionEnabled(isChecked)
+
+            setupProcessor()
+            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
+        }
 
         binding.apply {
             crimeTitle.doOnTextChanged { text, _, _, _ ->
@@ -109,7 +142,7 @@ class CrimeDetailFragment : Fragment() {
                 photoName = "IMG_${Date()}.JPG"
                 val photoFile = File(
                     requireContext().applicationContext.filesDir,
-                    photoName
+                    photoName!!
                 )
                 val photoUri = FileProvider.getUriForFile(
                     requireContext(),
@@ -165,33 +198,39 @@ class CrimeDetailFragment : Fragment() {
     // It should figure out which processor to use and then set it in imageProcessor
     // or if we don't want a processor, leave it as null
     fun setupProcessor() {
-        if (true) { // face detection or face contour detection
-            val options = FaceDetectorOptions.Builder().
-                setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE).
-                setContourMode( if(true) // TODO: update this to be if we have contour mode on
-                    FaceDetectorOptions.CONTOUR_MODE_ALL
-                else
-                    FaceDetectorOptions.CONTOUR_MODE_NONE).
-                setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE).
-                setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST).build();
+        val enableMesh = binding.enableMeshDetection.isChecked
+        if (enableMesh) {
+            imageProcessor = FaceMeshDetectorProcessor(requireContext())
+        } else {
+            val contourMode = if (true) // change to if contour is on
+                FaceDetectorOptions.CONTOUR_MODE_ALL
+            else
+                FaceDetectorOptions.CONTOUR_MODE_NONE
+            Log.d("MeshDebug", "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode")
+            val options = FaceDetectorOptions.Builder()
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                .setContourMode(contourMode)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .build()
+
             imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
         }
     }
 
-    fun processImage(path : File, imageIndex : Int ) {
-        val graphicOverlay = _binding!!.graphicOverlay
-        graphicOverlay!!.clear()
-
-        setBaseImage(path, _binding!!.graphicOverlay)
+    fun processImage(path : File, graphicOverlay: GraphicOverlay) {
+        graphicOverlay.clear()
+        setBaseImage(path, graphicOverlay)
 
         setupProcessor()
         if (imageProcessor != null) {
             val bitmap = rotatedBitmap(path)
-            //val bitmap = BitmapFactory.decodeFile(path.path)
-
             imageProcessor!!.processBitmap(bitmap, graphicOverlay)
         }
     }
+
+
+
 
     private fun updateUi(crime: Crime) {
         binding.apply {
@@ -227,7 +266,7 @@ class CrimeDetailFragment : Fragment() {
                 getString(R.string.crime_suspect_text)
             }
 
-            updatePhoto(crime.photoFileName)
+            updatePhotos(crime)
         }
     }
 
@@ -277,27 +316,44 @@ class CrimeDetailFragment : Fragment() {
         return resolvedActivity != null
     }
 
-    private fun updatePhoto(photoFileName: String?) {
-        if (binding.graphicOverlay.tag != photoFileName) {
+    private fun updatePhoto(graphicOverlay: GraphicOverlay, photoFileName: String?) {
+        if (graphicOverlay.tag != photoFileName) {
             val photoFile = photoFileName?.let {
                 File(requireContext().applicationContext.filesDir, it)
             }
 
-            if (photoFile?.exists() == true) {
-                binding.graphicOverlay.doOnLayout { measuredView ->
-                    processImage(photoFile, 0)
-
-                    binding.graphicOverlay.tag = photoFileName
-                    binding.graphicOverlay.contentDescription =
-                        getString(R.string.crime_photo_image_description)
-                    processImage(photoFile, 0)
+            if (photoFile?.exists() == true && photoFile.isFile) {
+                graphicOverlay.doOnLayout { measuredView ->
+                    try {
+                        graphicOverlay.tag = photoFileName
+                        graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
+                        processImage(photoFile, graphicOverlay)
+                    } catch (e: Exception) {
+                        Log.e("updatePhoto", "Error updating photo: ${e.localizedMessage}", e)
+                        handleNoPhoto(graphicOverlay)
+                    }
                 }
             } else {
-                binding.graphicOverlay.clear()
-                binding.graphicOverlay.tag = null
-                binding.graphicOverlay.contentDescription =
-                    getString(R.string.crime_photo_no_image_description)
+                Log.e("updatePhoto", "File does not exist or is not a file: ${photoFile?.path}")
+                handleNoPhoto(graphicOverlay)
             }
         }
     }
+
+
+    private fun handleNoPhoto(graphicOverlay: GraphicOverlay) {
+        graphicOverlay.clear()
+        graphicOverlay.tag = null
+        graphicOverlay.contentDescription = getString(R.string.crime_photo_no_image_description)
+    }
+
+
+
+    private fun updatePhotos(crime: Crime) {
+        updatePhoto(binding.graphicOverlay, crime.photoFileNames.getOrNull(0))
+        updatePhoto(binding.crimePhoto2, crime.photoFileNames.getOrNull(1))
+        updatePhoto(binding.crimePhoto3, crime.photoFileNames.getOrNull(2))
+        updatePhoto(binding.crimePhoto4, crime.photoFileNames.getOrNull(3))
+    }
+
 }

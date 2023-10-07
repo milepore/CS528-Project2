@@ -92,6 +92,41 @@
         android:textStyle="bold" />
 
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.mlkit.vision.demo.GraphicOverlay
+            android:id="@+id/crime_photo_2"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:cropToPadding="true"
+            android:background="@color/white"
+            android:contentDescription="@string/crime_photo_no_image_description" />
+
+        <com.google.mlkit.vision.demo.GraphicOverlay
+            android:id="@+id/crime_photo_3"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:cropToPadding="true"
+            android:background="@color/white"
+            android:contentDescription="@string/crime_photo_no_image_description" />
+
+        <com.google.mlkit.vision.demo.GraphicOverlay
+            android:id="@+id/crime_photo_4"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:cropToPadding="true"
+            android:background="@color/white"
+            android:contentDescription="@string/crime_photo_no_image_description" />
+    </LinearLayout>
+    <LinearLayout
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
@@ -195,4 +230,25 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="227dp"
+        android:layout_height="39dp"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/enableMeshDetection"
+            android:layout_width="16dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/enableMeshDetection1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Enable Mesh Detection" />
+    </LinearLayout>
+
+
 </LinearLayout>
