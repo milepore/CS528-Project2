@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">CriminalIntent</string>
     <string name="crime_title_hint">Enter a title for the crime.</string>
     <string name="crime_title_label">Title</string>
@@ -20,4 +20,7 @@
         Crime scene photo (not set)
     </string>
     <string name="crime_photo_image_description">Crime scene photo (set)</string>
+    <string name="previous_images" tools:ignore="MissingTranslation">PREVIOUS IMAGES</string>
+    <string name="enable_selfie_segmentation" tools:ignore="MissingTranslation">Enable Selfie Segmentation</string>
+    <string name="enable_mesh_detection" tools:ignore="MissingTranslation">Enable Mesh Detection</string>
 </resources>
