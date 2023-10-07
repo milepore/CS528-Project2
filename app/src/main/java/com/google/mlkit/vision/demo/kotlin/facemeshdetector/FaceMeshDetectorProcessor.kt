@@ -32,6 +32,7 @@ class FaceMeshDetectorProcessor(context: Context) :
   VisionProcessorBase<List<FaceMesh>>(context) {
 
   private val detector: FaceMeshDetector
+  private var isMeshDetectionEnabled = false     // default
 
   init {
     val optionsBuilder = FaceMeshDetectorOptions.Builder()
@@ -46,6 +47,10 @@ class FaceMeshDetectorProcessor(context: Context) :
   override fun stop() {
     super.stop()
     detector.close()
+  }
+
+  fun setMeshDetectionEnabled(enabled: Boolean) {
+    this.isMeshDetectionEnabled = enabled
   }
 
   override fun detectInImage(image: InputImage): Task<List<FaceMesh>> {

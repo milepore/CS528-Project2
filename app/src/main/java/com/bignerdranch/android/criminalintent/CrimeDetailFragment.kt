@@ -4,7 +4,6 @@ import com.google.mlkit.vision.demo.GraphicOverlay
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -12,7 +11,6 @@ import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.core.view.doOnLayout
@@ -26,7 +24,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bignerdranch.android.criminalintent.databinding.FragmentCrimeDetailBinding
-import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.demo.VisionImageProcessor
 import kotlinx.coroutines.launch
 import java.io.File
@@ -34,16 +31,17 @@ import java.util.Date
 import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.util.Log
+import com.google.mlkit.vision.demo.kotlin.facemeshdetector.FaceMeshDetectorProcessor
 
 
 private const val DATE_FORMAT = "EEE, MMM, dd"
 
+
 class CrimeDetailFragment : Fragment() {
 
     private var _binding: FragmentCrimeDetailBinding? = null
+    private lateinit var faceMeshProcessor: FaceMeshDetectorProcessor
     private val binding
         get() = checkNotNull(_binding) {
             "Cannot access binding because it is null. Is the view visible?"
@@ -60,7 +58,11 @@ class CrimeDetailFragment : Fragment() {
     ) { uri: Uri? ->
         uri?.let { parseContactSelection(it) }
     }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
+        faceMeshProcessor = FaceMeshDetectorProcessor(requireContext())
+    }
     private var photoName: String? = null
     private var nextPhotoIndex = 0
     private val maxPhotos = 4
@@ -70,7 +72,7 @@ class CrimeDetailFragment : Fragment() {
     ) { didTakePhoto: Boolean ->
         if (didTakePhoto && photoName != null) {
             crimeDetailViewModel.updateCrime { oldCrime ->
-                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { !it.isNullOrBlank() }.toMutableList()
+                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { it.isNotBlank() }.toMutableList()
 
                 while (filteredPhotoFileNames.size <= nextPhotoIndex) {
                     filteredPhotoFileNames.add("")
@@ -102,6 +104,17 @@ class CrimeDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
+        binding.enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
+            Log.d("CheckboxChanged", "Mesh detection is: $isChecked")
+
+            // update faceMeshProcessor settings
+            faceMeshProcessor.setMeshDetectionEnabled(isChecked)
+
+            setupProcessor()
+            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
+        }
+
         binding.apply {
             crimeTitle.doOnTextChanged { text, _, _, _ ->
                 crimeDetailViewModel.updateCrime { oldCrime ->
@@ -129,7 +142,7 @@ class CrimeDetailFragment : Fragment() {
                 photoName = "IMG_${Date()}.JPG"
                 val photoFile = File(
                     requireContext().applicationContext.filesDir,
-                    photoName
+                    photoName!!
                 )
                 val photoUri = FileProvider.getUriForFile(
                     requireContext(),
@@ -176,20 +189,27 @@ class CrimeDetailFragment : Fragment() {
     // It should figure out which processor to use and then set it in imageProcessor
     // or if we don't want a processor, leave it as null
     fun setupProcessor() {
-        if (true) { // face detection or face contour detection
-            val options = FaceDetectorOptions.Builder().
-                setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE).
-                setContourMode( if(true) // TODO: update this to be if we have contour mode on
-                    FaceDetectorOptions.CONTOUR_MODE_ALL
-                else
-                    FaceDetectorOptions.CONTOUR_MODE_NONE).
-                setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE).
-                setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST).build();
+        val enableMesh = binding.enableMeshDetection.isChecked
+        if (enableMesh) {
+            imageProcessor = FaceMeshDetectorProcessor(requireContext())
+        } else {
+            val contourMode = if (true) // change to if contour is on
+                FaceDetectorOptions.CONTOUR_MODE_ALL
+            else
+                FaceDetectorOptions.CONTOUR_MODE_NONE
+            Log.d("MeshDebug", "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode")
+            val options = FaceDetectorOptions.Builder()
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                .setContourMode(contourMode)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .build()
+
             imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
         }
     }
 
-    fun processImage(path : File, imageIndex : Int , graphicOverlay: GraphicOverlay) {
+    fun processImage(path : File, graphicOverlay: GraphicOverlay) {
         graphicOverlay.clear()
         setBaseImage(path, graphicOverlay)
 
@@ -199,6 +219,7 @@ class CrimeDetailFragment : Fragment() {
             imageProcessor!!.processBitmap(bitmap, graphicOverlay)
         }
     }
+
 
 
 
@@ -285,13 +306,6 @@ class CrimeDetailFragment : Fragment() {
             )
         return resolvedActivity != null
     }
-    class BitmapGraphic(overlay: GraphicOverlay, private val bitmap: Bitmap) : GraphicOverlay.Graphic(overlay) {
-        override fun draw(canvas: Canvas) {
-            bitmap?.let {
-                canvas.drawBitmap(it, 0f, 0f, null)
-            }
-        }
-    }
 
     private fun updatePhoto(graphicOverlay: GraphicOverlay, photoFileName: String?) {
         if (graphicOverlay.tag != photoFileName) {
@@ -302,22 +316,9 @@ class CrimeDetailFragment : Fragment() {
             if (photoFile?.exists() == true && photoFile.isFile) {
                 graphicOverlay.doOnLayout { measuredView ->
                     try {
-                        val scaledBitmap = getScaledBitmap(photoFile.path, measuredView.width, measuredView.height)
-                        if (scaledBitmap != null) {
-                            val bitmapGraphic = BitmapGraphic(graphicOverlay, scaledBitmap)
-                            graphicOverlay.clear()
-                            graphicOverlay.add(bitmapGraphic)
-                            graphicOverlay.postInvalidate()
-
-                            graphicOverlay.tag = photoFileName
-                            graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
-
-                            // Call processImage here
-                            processImage(photoFile, 0, graphicOverlay)
-                        } else {
-                            Log.e("updatePhoto", "Scaled bitmap is null for file: ${photoFile.path}")
-                            handleNoPhoto(graphicOverlay)
-                        }
+                        graphicOverlay.tag = photoFileName
+                        graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
+                        processImage(photoFile, graphicOverlay)
                     } catch (e: Exception) {
                         Log.e("updatePhoto", "Error updating photo: ${e.localizedMessage}", e)
                         handleNoPhoto(graphicOverlay)
