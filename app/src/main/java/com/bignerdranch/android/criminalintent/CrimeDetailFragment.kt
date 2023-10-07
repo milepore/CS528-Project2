@@ -24,7 +24,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bignerdranch.android.criminalintent.databinding.FragmentCrimeDetailBinding
-import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.demo.VisionImageProcessor
 import kotlinx.coroutines.launch
 import java.io.File
@@ -32,8 +31,6 @@ import java.util.Date
 import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.util.Log
 import com.google.mlkit.vision.demo.kotlin.facemeshdetector.FaceMeshDetectorProcessor
 
@@ -75,7 +72,7 @@ class CrimeDetailFragment : Fragment() {
     ) { didTakePhoto: Boolean ->
         if (didTakePhoto && photoName != null) {
             crimeDetailViewModel.updateCrime { oldCrime ->
-                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { !it.isNullOrBlank() }.toMutableList()
+                val filteredPhotoFileNames = oldCrime.photoFileNames.filter { it.isNotBlank() }.toMutableList()
 
                 while (filteredPhotoFileNames.size <= nextPhotoIndex) {
                     filteredPhotoFileNames.add("")
@@ -145,7 +142,7 @@ class CrimeDetailFragment : Fragment() {
                 photoName = "IMG_${Date()}.JPG"
                 val photoFile = File(
                     requireContext().applicationContext.filesDir,
-                    photoName
+                    photoName!!
                 )
                 val photoUri = FileProvider.getUriForFile(
                     requireContext(),
@@ -212,13 +209,9 @@ class CrimeDetailFragment : Fragment() {
         }
     }
 
-    fun processImage(scaledBitmap: Bitmap, path : File, imageIndex : Int , graphicOverlay: GraphicOverlay) {
+    fun processImage(path : File, graphicOverlay: GraphicOverlay) {
         graphicOverlay.clear()
         setBaseImage(path, graphicOverlay)
-
-        // pass the status of checkbox of faceMeshDetection to setupProcessor
-        val faceMeshDetector = FaceMeshDetectorProcessor(requireContext())
-        val image = InputImage.fromBitmap(scaledBitmap, 0)
 
         setupProcessor()
         if (imageProcessor != null) {
@@ -313,13 +306,6 @@ class CrimeDetailFragment : Fragment() {
             )
         return resolvedActivity != null
     }
-    class BitmapGraphic(overlay: GraphicOverlay, private val bitmap: Bitmap) : GraphicOverlay.Graphic(overlay) {
-        override fun draw(canvas: Canvas) {
-            bitmap?.let {
-                canvas.drawBitmap(it, 0f, 0f, null)
-            }
-        }
-    }
 
     private fun updatePhoto(graphicOverlay: GraphicOverlay, photoFileName: String?) {
         if (graphicOverlay.tag != photoFileName) {
@@ -330,22 +316,9 @@ class CrimeDetailFragment : Fragment() {
             if (photoFile?.exists() == true && photoFile.isFile) {
                 graphicOverlay.doOnLayout { measuredView ->
                     try {
-                        val scaledBitmap = getScaledBitmap(photoFile.path, measuredView.width, measuredView.height)
-                        if (scaledBitmap != null) {
-                            val bitmapGraphic = BitmapGraphic(graphicOverlay, scaledBitmap)
-                            graphicOverlay.clear()
-                            graphicOverlay.add(bitmapGraphic)
-                            graphicOverlay.postInvalidate()
-
-                            graphicOverlay.tag = photoFileName
-                            graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
-
-                            // Call processImage here
-                            processImage(scaledBitmap, photoFile, 0, graphicOverlay)
-                        } else {
-                            Log.e("updatePhoto", "Scaled bitmap is null for file: ${photoFile.path}")
-                            handleNoPhoto(graphicOverlay)
-                        }
+                        graphicOverlay.tag = photoFileName
+                        graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
+                        processImage(photoFile, graphicOverlay)
                     } catch (e: Exception) {
                         Log.e("updatePhoto", "Error updating photo: ${e.localizedMessage}", e)
                         handleNoPhoto(graphicOverlay)
