@@ -323,7 +323,7 @@ class CrimeDetailFragment : Fragment() {
             }
 
             if (photoFile?.exists() == true && photoFile.isFile) {
-                graphicOverlay.doOnLayout { measuredView ->
+                graphicOverlay.doOnLayout {
                     try {
                         graphicOverlay.tag = photoFileName
                         graphicOverlay.contentDescription = getString(R.string.crime_photo_image_description)
