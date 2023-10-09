@@ -32,6 +32,7 @@ import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import android.util.Log
+import android.widget.TextView
 import com.google.mlkit.vision.demo.kotlin.facemeshdetector.FaceMeshDetectorProcessor
 
 
@@ -105,15 +106,15 @@ class CrimeDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
 
-        binding.enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
-            Log.d("CheckboxChanged", "Mesh detection is: $isChecked")
-
-            // update faceMeshProcessor settings
-            faceMeshProcessor.setMeshDetectionEnabled(isChecked)
-
-            setupProcessor()
-            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
-        }
+//        binding.enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
+//            Log.d("CheckboxChanged", "Mesh detection is: $isChecked")
+//
+//            // update faceMeshProcessor settings
+//            faceMeshProcessor.setMeshDetectionEnabled(isChecked)
+//
+//            setupProcessor()
+//            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
+//        }
 
         binding.apply {
             crimeTitle.doOnTextChanged { text, _, _, _ ->
@@ -165,8 +166,8 @@ class CrimeDetailFragment : Fragment() {
                 binding.enableMeshDetection,
                 binding.enableSelfieSegmentation
             )
-
             )
+//            val nullTextView: TextView = null
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -198,15 +199,29 @@ class CrimeDetailFragment : Fragment() {
     // It should figure out which processor to use and then set it in imageProcessor
     // or if we don't want a processor, leave it as null
     fun setupProcessor() {
+        val enableFace = binding.enableFaceDetection.isChecked
         val enableMesh = binding.enableMeshDetection.isChecked
-        if (enableMesh) {
-            imageProcessor = FaceMeshDetectorProcessor(requireContext())
-        } else {
-            val contourMode = if (true) // change to if contour is on
+        val enableContour = binding.enableContourDetection.isChecked
+        val enableSelfie = binding.enableSelfieSegmentation.isChecked
+//        if (!enableFace){
+//            val nullFace: TextView = binding.numFaces
+//        }
+        if (enableFace) {
+            val options = FaceDetectorOptions.Builder()
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .enableTracking()
+                .build()
+
+            imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+        } else if (enableContour) {
+            val contourMode = if (enableContour) // change to if contour is on
                 FaceDetectorOptions.CONTOUR_MODE_ALL
             else
                 FaceDetectorOptions.CONTOUR_MODE_NONE
-            Log.d("MeshDebug", "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode")
+            Log.d(
+                "MeshDebug",
+                "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode"
+            )
             val options = FaceDetectorOptions.Builder()
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
                 .setContourMode(contourMode)
@@ -215,6 +230,10 @@ class CrimeDetailFragment : Fragment() {
                 .build()
 
             imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+        } else if (enableMesh) {
+            imageProcessor = FaceMeshDetectorProcessor(requireContext())
+        } else if(!enableFace&&!enableMesh&&!enableContour&&!enableSelfie){
+            imageProcessor = null
         }
     }
 
