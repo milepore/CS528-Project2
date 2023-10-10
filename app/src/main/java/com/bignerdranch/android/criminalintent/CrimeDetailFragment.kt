@@ -32,7 +32,7 @@ import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import android.util.Log
-import android.widget.TextView
+import com.google.mlkit.vision.demo.CameraImageGraphic
 import com.google.mlkit.vision.demo.kotlin.facemeshdetector.FaceMeshDetectorProcessor
 
 
@@ -240,11 +240,14 @@ class CrimeDetailFragment : Fragment() {
     fun processImage(path : File, graphicOverlay: GraphicOverlay) {
         graphicOverlay.clear()
         setBaseImage(path, graphicOverlay)
+        binding.numFaces.setText("")
 
         setupProcessor()
+        val bitmap = rotatedBitmap(path)
         if (imageProcessor != null) {
-            val bitmap = rotatedBitmap(path)
             imageProcessor!!.processBitmap(bitmap, graphicOverlay)
+        } else {
+            graphicOverlay.add(CameraImageGraphic(graphicOverlay, bitmap))
         }
     }
 
