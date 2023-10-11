@@ -29,10 +29,12 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Date
 import com.google.mlkit.vision.demo.kotlin.facedetector.FaceDetectorProcessor
+import com.google.mlkit.vision.demo.kotlin.facemeshdetector.FaceMeshDetectorProcessor
+import com.google.mlkit.vision.demo.kotlin.segmenter.SegmenterProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import android.util.Log
-import com.google.mlkit.vision.demo.kotlin.facemeshdetector.FaceMeshDetectorProcessor
+
 
 
 private const val DATE_FORMAT = "EEE, MMM, dd"
@@ -42,6 +44,7 @@ class CrimeDetailFragment : Fragment() {
 
     private var _binding: FragmentCrimeDetailBinding? = null
     private lateinit var faceMeshProcessor: FaceMeshDetectorProcessor
+    private lateinit var segmenterProcessor: SegmenterProcessor
     private val binding
         get() = checkNotNull(_binding) {
             "Cannot access binding because it is null. Is the view visible?"
@@ -110,6 +113,13 @@ class CrimeDetailFragment : Fragment() {
 
             // update faceMeshProcessor settings
             faceMeshProcessor.setMeshDetectionEnabled(isChecked)
+
+            setupProcessor()
+            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
+        }
+
+        binding.enableSelfieSegmentation.setOnCheckedChangeListener { _, isChecked ->
+            Log.d("CheckboxChanged", "Selfie segmentation is: $isChecked")
 
             setupProcessor()
             crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
@@ -190,22 +200,37 @@ class CrimeDetailFragment : Fragment() {
     // or if we don't want a processor, leave it as null
     fun setupProcessor() {
         val enableMesh = binding.enableMeshDetection.isChecked
-        if (enableMesh) {
-            imageProcessor = FaceMeshDetectorProcessor(requireContext())
-        } else {
-            val contourMode = if (true) // change to if contour is on
-                FaceDetectorOptions.CONTOUR_MODE_ALL
-            else
-                FaceDetectorOptions.CONTOUR_MODE_NONE
-            Log.d("MeshDebug", "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode")
-            val options = FaceDetectorOptions.Builder()
-                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
-                .setContourMode(contourMode)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                .build()
+        val enableSelfieSegmentation = binding.enableSelfieSegmentation.isChecked
+        val enableContour = binding.enableContourDetection.isChecked
+        val enableFaceDetection = binding.enableFaceDetection.isChecked
 
-            imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+        when {
+            true -> {
+                // Assuming you have a SelfieSegmentationProcessor class
+                imageProcessor = SegmenterProcessor(requireContext())
+            }
+            enableMesh -> {
+                imageProcessor = FaceMeshDetectorProcessor(requireContext())
+            }
+            enableContour || enableFaceDetection -> {
+                val contourMode = if (enableContour) {
+                    FaceDetectorOptions.CONTOUR_MODE_ALL
+                } else {
+                    FaceDetectorOptions.CONTOUR_MODE_NONE
+                }
+
+                val options = FaceDetectorOptions.Builder()
+                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                    .setContourMode(contourMode)
+                    .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
+                    .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                    .build()
+
+                imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+            }
+            else -> {
+                imageProcessor = null
+            }
         }
     }
 

@@ -67,7 +67,8 @@ class SegmenterProcessor :
     graphicOverlay.add(
       SegmentationGraphic(
         graphicOverlay,
-        segmentationMask
+        segmentationMask,
+        false
       )
     )
   }

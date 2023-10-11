@@ -64,6 +64,7 @@ dependencies {
     implementation 'com.google.mlkit:segmentation-selfie:16.0.0-beta4'
 
 
+
     // Guava for google overlay
     implementation 'com.google.guava:guava:27.1-android'
 

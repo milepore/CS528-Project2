@@ -26,12 +26,18 @@ import com.google.mlkit.vision.segmentation.SegmentationMask
 import java.nio.ByteBuffer
 
 /** Draw the mask from SegmentationResult in preview.  */
-class SegmentationGraphic(overlay: GraphicOverlay, segmentationMask: SegmentationMask) :
+class SegmentationGraphic(
+  overlay: GraphicOverlay,
+  segmentationMask: SegmentationMask,
+  isRawSizeMaskEnabled: Boolean =
+    segmentationMask.width != overlay.getImageWidth() ||
+            segmentationMask.height != overlay.getImageHeight()
+) :
   GraphicOverlay.Graphic(overlay) {
   private val mask: ByteBuffer
   private val maskWidth: Int
   private val maskHeight: Int
-  private val isRawSizeMaskEnabled: Boolean
+  private val isRawSizeMaskEnabled: Boolean = isRawSizeMaskEnabled
   private val scaleX: Float
   private val scaleY: Float
 
@@ -76,8 +82,6 @@ class SegmentationGraphic(overlay: GraphicOverlay, segmentationMask: Segmentatio
     mask = segmentationMask.buffer
     maskWidth = segmentationMask.width
     maskHeight = segmentationMask.height
-    isRawSizeMaskEnabled =
-      maskWidth != overlay.getImageWidth() || maskHeight != overlay.getImageHeight()
     scaleX = overlay.getImageWidth() * 1f / maskWidth
     scaleY = overlay.getImageHeight() * 1f / maskHeight
   }
