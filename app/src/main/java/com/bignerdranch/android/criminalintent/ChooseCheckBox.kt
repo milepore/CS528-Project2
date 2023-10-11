@@ -1,49 +1,27 @@
 package com.bignerdranch.android.criminalintent
 
 import android.os.Bundle
+import androidx.fragment.app.Fragment
+import android.view.View
 import android.widget.CheckBox
-import androidx.appcompat.app.AppCompatActivity
+import com.bignerdranch.android.criminalintent.databinding.FragmentCrimeDetailBinding
 
-class ChooseCheckBox : AppCompatActivity() {
+class ChooseCheckBox(checkboxes : Array<CheckBox>)  {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.fragment_crime_detail)
+    val allCheckBoxes : Array<CheckBox>
 
-        val enableFaceDetection: CheckBox = findViewById(R.id.enableFaceDetection)
-        val enableContourDetection: CheckBox = findViewById(R.id.enableContourDetection)
-        val enableMeshDetection: CheckBox = findViewById(R.id.enableMeshDetection)
-        val enableSelfieSegmentation: CheckBox = findViewById(R.id.enableSelfieSegmentation)
+    init {
+        allCheckBoxes = checkboxes
 
-        enableFaceDetection.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableContourDetection.isChecked = false
-                enableMeshDetection.isChecked = false
-                enableSelfieSegmentation.isChecked = false
-            }
-        }
-
-        enableContourDetection.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableFaceDetection.isChecked = false
-                enableMeshDetection.isChecked = false
-                enableSelfieSegmentation.isChecked = false
-            }
-        }
-
-        enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableFaceDetection.isChecked = false
-                enableContourDetection.isChecked = false
-                enableSelfieSegmentation.isChecked = false
-            }
-        }
-
-        enableSelfieSegmentation.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableFaceDetection.isChecked = false
-                enableContourDetection.isChecked = false
-                enableMeshDetection.isChecked = false
+        for (checkBox in allCheckBoxes) {
+            checkBox.setOnCheckedChangeListener { currentCheckBox, isChecked ->
+                if (isChecked) {
+                    for (otherCheckBox in allCheckBoxes) {
+                        if (otherCheckBox != currentCheckBox) {
+                            otherCheckBox.isChecked = false
+                        }
+                    }
+                }
             }
         }
     }

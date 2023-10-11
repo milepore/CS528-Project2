@@ -9,8 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:baselineAligned="false">
+        android:orientation="horizontal">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -88,7 +87,7 @@
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/previous_images"
+        android:text="PREVIOUS IMAGES"
         android:textSize="16sp"
         android:textStyle="bold" />
 
@@ -128,9 +127,9 @@
             android:contentDescription="@string/crime_photo_no_image_description" />
     </LinearLayout>
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
         <CheckBox
             android:id="@+id/enableFaceDetection"
@@ -149,30 +148,67 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="" />
+
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <CheckBox
-            android:id="@+id/enableContourDetection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:id="@+id/enableContourDetectionLabel"
-            android:layout_width="335dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enable Contour Detection" />
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/enableContourDetection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/enableContourDetectionLabel"
+                android:layout_width="335dp"
+                android:layout_height="wrap_content"
+                android:text="Enable Contour Detection" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/enableMeshDetection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/enableMeshDetectionLabel"
+                android:layout_width="330dp"
+                android:layout_height="wrap_content"
+                android:text="Enable Mesh Detection" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
             <CheckBox
                 android:id="@+id/enableSelfieSegmentation"
@@ -183,26 +219,10 @@
                 android:id="@+id/enableSelfieSegmentationLabel"
                 android:layout_width="329dp"
                 android:layout_height="wrap_content"
-                android:text="@string/enable_selfie_segmentation" />
+                android:text="Enable Selfie Segmentation" />
+
+        </LinearLayout>
 
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:orientation="horizontal">
-
-        <CheckBox
-            android:id="@+id/enableMeshDetection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:id="@+id/enableMeshDetection1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/enable_mesh_detection" />
-    </LinearLayout>
-
 
 </LinearLayout>

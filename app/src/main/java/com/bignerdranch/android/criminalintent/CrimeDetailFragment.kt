@@ -108,16 +108,16 @@ class CrimeDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
 
-        binding.enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
-            Log.d("CheckboxChanged", "Mesh detection is: $isChecked")
-
-            // update faceMeshProcessor settings
-            faceMeshProcessor.setMeshDetectionEnabled(isChecked)
-
-            setupProcessor()
-            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
-        }
-
+//        binding.enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
+//            Log.d("CheckboxChanged", "Mesh detection is: $isChecked")
+//
+//            // update faceMeshProcessor settings
+//            faceMeshProcessor.setMeshDetectionEnabled(isChecked)
+//
+//            setupProcessor()
+//            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
+//        }
+// TODO: FIX
         binding.enableSelfieSegmentation.setOnCheckedChangeListener { _, isChecked ->
             Log.d("CheckboxChanged", "Selfie segmentation is: $isChecked")
 
@@ -168,6 +168,15 @@ class CrimeDetailFragment : Fragment() {
                 null
             )
             crimeCamera.isEnabled = canResolveIntent(captureImageIntent)
+
+            ChooseCheckBox(arrayOf(
+                binding.enableFaceDetection,
+                binding.enableContourDetection,
+                binding.enableMeshDetection,
+                binding.enableSelfieSegmentation
+            )
+            )
+//            val nullTextView: TextView = null
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -199,49 +208,57 @@ class CrimeDetailFragment : Fragment() {
     // It should figure out which processor to use and then set it in imageProcessor
     // or if we don't want a processor, leave it as null
     fun setupProcessor() {
+        val enableFace = binding.enableFaceDetection.isChecked
         val enableMesh = binding.enableMeshDetection.isChecked
-        val enableSelfieSegmentation = binding.enableSelfieSegmentation.isChecked
         val enableContour = binding.enableContourDetection.isChecked
-        val enableFaceDetection = binding.enableFaceDetection.isChecked
+        val enableSelfie = binding.enableSelfieSegmentation.isChecked
+//        if (!enableFace){
+//            val nullFace: TextView = binding.numFaces
+//        }
+        if (enableFace) {
+            val options = FaceDetectorOptions.Builder()
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .enableTracking()
+                .build()
 
-        when {
-            true -> {
-                // Assuming you have a SelfieSegmentationProcessor class
-                imageProcessor = SegmenterProcessor(requireContext())
-            }
-            enableMesh -> {
-                imageProcessor = FaceMeshDetectorProcessor(requireContext())
-            }
-            enableContour || enableFaceDetection -> {
-                val contourMode = if (enableContour) {
-                    FaceDetectorOptions.CONTOUR_MODE_ALL
-                } else {
-                    FaceDetectorOptions.CONTOUR_MODE_NONE
-                }
+            imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+        } else if (enableContour) {
+            val contourMode = if (enableContour) // change to if contour is on
+                FaceDetectorOptions.CONTOUR_MODE_ALL
+            else
+                FaceDetectorOptions.CONTOUR_MODE_NONE
+            Log.d(
+                "MeshDebug",
+                "Setting up processor with enableMesh: $enableMesh, contourMode: $contourMode"
+            )
+            val options = FaceDetectorOptions.Builder()
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                .setContourMode(contourMode)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .build()
 
-                val options = FaceDetectorOptions.Builder()
-                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
-                    .setContourMode(contourMode)
-                    .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-                    .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                    .build()
-
-                imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
-            }
-            else -> {
-                imageProcessor = null
-            }
+            imageProcessor = FaceDetectorProcessor(requireContext(), options, binding.numFaces)
+        } else if (enableMesh) {
+            imageProcessor = FaceMeshDetectorProcessor(requireContext())
+        } else if (enableSelfie) {
+            imageProcessor = SegmenterProcessor(requireContext())
+        } else {
+            imageProcessor = null
         }
     }
 
     fun processImage(path : File, graphicOverlay: GraphicOverlay) {
         graphicOverlay.clear()
         setBaseImage(path, graphicOverlay)
+        binding.numFaces.setText("")
 
         setupProcessor()
+        val bitmap = rotatedBitmap(path)
         if (imageProcessor != null) {
-            val bitmap = rotatedBitmap(path)
             imageProcessor!!.processBitmap(bitmap, graphicOverlay)
+        } else {
+            graphicOverlay.add(CameraImageGraphic(graphicOverlay, bitmap))
         }
     }
 
