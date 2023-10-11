@@ -34,7 +34,7 @@ import com.google.mlkit.vision.demo.kotlin.segmenter.SegmenterProcessor
 import com.google.mlkit.vision.demo.rotatedBitmap
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import android.util.Log
-
+import com.google.mlkit.vision.demo.CameraImageGraphic
 
 
 private const val DATE_FORMAT = "EEE, MMM, dd"
@@ -44,7 +44,6 @@ class CrimeDetailFragment : Fragment() {
 
     private var _binding: FragmentCrimeDetailBinding? = null
     private lateinit var faceMeshProcessor: FaceMeshDetectorProcessor
-    private lateinit var segmenterProcessor: SegmenterProcessor
     private val binding
         get() = checkNotNull(_binding) {
             "Cannot access binding because it is null. Is the view visible?"
@@ -107,23 +106,12 @@ class CrimeDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-//        binding.enableMeshDetection.setOnCheckedChangeListener { _, isChecked ->
-//            Log.d("CheckboxChanged", "Mesh detection is: $isChecked")
-//
-//            // update faceMeshProcessor settings
-//            faceMeshProcessor.setMeshDetectionEnabled(isChecked)
-//
-//            setupProcessor()
-//            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
-//        }
-// TODO: FIX
-        binding.enableSelfieSegmentation.setOnCheckedChangeListener { _, isChecked ->
-            Log.d("CheckboxChanged", "Selfie segmentation is: $isChecked")
-
-            setupProcessor()
-            crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
-        }
+        // if we wanted to update the pictures with the new analysis when you update checkboxes,
+        // we could add listeners to all checkboxes to do this:
+        //binding.enableSelfieSegmentation.setOnCheckedChangeListener { _, isChecked ->
+        //    setupProcessor()
+        //    crimeDetailViewModel.crime.value?.let { updatePhotos(it) }
+        //}
 
         binding.apply {
             crimeTitle.doOnTextChanged { text, _, _, _ ->
@@ -212,9 +200,7 @@ class CrimeDetailFragment : Fragment() {
         val enableMesh = binding.enableMeshDetection.isChecked
         val enableContour = binding.enableContourDetection.isChecked
         val enableSelfie = binding.enableSelfieSegmentation.isChecked
-//        if (!enableFace){
-//            val nullFace: TextView = binding.numFaces
-//        }
+
         if (enableFace) {
             val options = FaceDetectorOptions.Builder()
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
