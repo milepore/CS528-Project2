@@ -108,7 +108,7 @@ class FaceGraphic constructor(overlay: GraphicOverlay?, private val face: Face) 
   }
 
   companion object {
-    private const val FACE_POSITION_RADIUS = 8.0f
+    private const val FACE_POSITION_RADIUS = 3.0f
     private const val ID_TEXT_SIZE = 30.0f
     private const val ID_Y_OFFSET = 40.0f
     private const val BOX_STROKE_WIDTH = 5.0f

@@ -140,7 +140,7 @@ class FaceMeshGraphic(overlay: GraphicOverlay, private val faceMesh: FaceMesh) :
 
   companion object {
     private const val USE_CASE_CONTOUR_ONLY = 999
-    private const val FACE_POSITION_RADIUS = 8.0f
+    private const val FACE_POSITION_RADIUS = 3.0f
     private const val BOX_STROKE_WIDTH = 5.0f
   }
 
